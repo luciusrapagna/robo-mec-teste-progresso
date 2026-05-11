@@ -22,14 +22,36 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 
 
-CAMINHO_PROJETO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.append(CAMINHO_PROJETO)
+# =====================================================
+# CAMINHO DO PROJETO E BANCO DE ESCRITA
+# =====================================================
 
+CAMINHO_PROJETO = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")
+)
+
+sys.path.insert(0, CAMINHO_PROJETO)
+
+try:
+    from ia.leitor_estilo import gerar_orientacao_estilo
+except Exception:
+    def gerar_orientacao_estilo():
+        return (
+            "Utilizar linguagem institucional, pedagógica, clara e adequada para avaliação do MEC, "
+            "com foco em monitoramento longitudinal, NDE, PPC, melhoria contínua e gestão acadêmica baseada em evidências."
+        )
+
+
+# =====================================================
+# CONFIGURAÇÃO E PASTAS
+# =====================================================
 
 def carregar_config():
     caminho = os.path.join(CAMINHO_PROJETO, "config.json")
+
     if not os.path.exists(caminho):
         raise FileNotFoundError("Arquivo config.json não encontrado na raiz do projeto.")
+
     with open(caminho, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -53,6 +75,10 @@ def criar_pasta_projeto(config):
 
     return pastas
 
+
+# =====================================================
+# SELEÇÃO E LEITURA DE PLANILHAS
+# =====================================================
 
 def pedir_planilha(config):
     print(f"\nROBÔ MEC - {config.get('nome_avaliacao', 'Teste de Progresso')}")
@@ -119,6 +145,10 @@ def detectar_colunas(base):
     return coluna_nome, coluna_periodo, coluna_total
 
 
+# =====================================================
+# PROCESSAMENTO DA BASE
+# =====================================================
+
 def preparar_base(base, coluna_nome, coluna_periodo, coluna_total, config):
     base = base.copy()
 
@@ -182,6 +212,10 @@ def preparar_base(base, coluna_nome, coluna_periodo, coluna_total, config):
 
     return base, coluna_nome, coluna_periodo
 
+
+# =====================================================
+# CICLOS FORMATIVOS E PONTOS EXTRAS
+# =====================================================
 
 def extrair_numero_periodo(valor):
     numeros = re.findall(r"\d+", str(valor))
@@ -265,6 +299,10 @@ def gerar_pontos_extras(base, coluna_nome, coluna_periodo, config):
     )
 
 
+# =====================================================
+# GRANDES ÁREAS
+# =====================================================
+
 def identificar_grandes_areas(base, config):
     areas = config.get("grandes_areas", {})
     colunas_areas = {}
@@ -272,6 +310,7 @@ def identificar_grandes_areas(base, config):
     for nome_area, termos in areas.items():
         for coluna in base.columns:
             coluna_lower = str(coluna).lower()
+
             if any(str(termo).lower() in coluna_lower for termo in termos):
                 if pd.api.types.is_numeric_dtype(base[coluna]):
                     colunas_areas[nome_area] = coluna
@@ -312,6 +351,10 @@ def gerar_tabela_grandes_areas(base, coluna_periodo, colunas_areas):
 
     return tabelas
 
+
+# =====================================================
+# PLANO DE AÇÃO
+# =====================================================
 
 def gerar_plano_acao(ranking_periodos, alunos_risco, tabelas_areas, config):
     plano = []
@@ -357,6 +400,10 @@ def gerar_plano_acao(ranking_periodos, alunos_risco, tabelas_areas, config):
 
     return pd.DataFrame(plano)
 
+
+# =====================================================
+# EXCEL
+# =====================================================
 
 def aplicar_cores_excel(caminho_excel):
     wb = load_workbook(caminho_excel)
@@ -477,6 +524,10 @@ def gerar_tabelas(base, coluna_nome, coluna_periodo, pastas, config):
         tabelas_areas
     )
 
+
+# =====================================================
+# GRÁFICOS
+# =====================================================
 
 def configurar_estilo_grafico():
     plt.rcParams["font.family"] = "Arial"
@@ -739,6 +790,7 @@ def set_cell_border(cell, top=None, bottom=None, left=None, right=None):
     tc = cell._tc
     tc_pr = tc.get_or_add_tcPr()
     borders = tc_pr.first_child_found_in("w:tcBorders")
+
     if borders is None:
         borders = OxmlElement("w:tcBorders")
         tc_pr.append(borders)
@@ -751,6 +803,7 @@ def set_cell_border(cell, top=None, bottom=None, left=None, right=None):
     }.items():
         tag = "w:{}".format(edge_name)
         element = borders.find(qn(tag))
+
         if element is None:
             element = OxmlElement(tag)
             borders.append(element)
@@ -776,6 +829,7 @@ def formatar_tabela_ibge(tabela):
 
             for paragraph in cell.paragraphs:
                 paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
                 for run in paragraph.runs:
                     run.font.name = "Times New Roman"
                     run.font.size = Pt(11)
@@ -790,6 +844,7 @@ def formatar_tabela_ibge(tabela):
                     left=None,
                     right=None,
                 )
+
                 for paragraph in cell.paragraphs:
                     for run in paragraph.runs:
                         run.bold = True
@@ -802,6 +857,7 @@ def formatar_tabela_ibge(tabela):
                     left=None,
                     right=None,
                 )
+
             else:
                 set_cell_border(cell, top=None, bottom=None, left=None, right=None)
 
@@ -844,6 +900,10 @@ def adicionar_legenda_figura(doc, numero, texto, config):
     adicionar_fonte(doc, config)
 
 
+# =====================================================
+# RELATÓRIO WORD
+# =====================================================
+
 def criar_relatorio_word(
     base,
     ranking_periodos,
@@ -871,10 +931,13 @@ def criar_relatorio_word(
     finalidade = config.get("relatorio", {}).get("finalidade", "")
     estilo = config.get("estilo_mec", {})
 
+    orientacao_estilo = gerar_orientacao_estilo()
+
     doc = Document()
     configurar_documento(doc)
 
     doc.add_heading(titulo, level=0)
+
     add_paragrafo(doc, f"Instituição: {nome_instituicao}")
     add_paragrafo(doc, f"Curso: {nome_curso}")
     add_paragrafo(doc, f"Instrumento avaliativo: {nome_avaliacao}")
@@ -888,6 +951,8 @@ def criar_relatorio_word(
         f"nos estudantes que demandam acompanhamento pedagógico, nos estudantes elegíveis à bonificação "
         f"acadêmica e no plano de ação pedagógico decorrente dos indicadores. {finalidade}"
     )
+
+    add_paragrafo(doc, orientacao_estilo)
 
     add_titulo(doc, "1", "Resumo executivo")
 
@@ -1091,6 +1156,7 @@ def criar_relatorio_word(
             )
 
             tabela_area_doc = doc.add_table(rows=1, cols=5)
+
             cab = tabela_area_doc.rows[0].cells
             cab[0].text = "Turma/Período"
             cab[1].text = "Número"
@@ -1126,6 +1192,7 @@ def criar_relatorio_word(
     adicionar_titulo_tabela(doc, numero_tabela, "Estudantes classificados em risco pedagógico ou crítico")
 
     tabela_risco = doc.add_table(rows=1, cols=5)
+
     cab = tabela_risco.rows[0].cells
     cab[0].text = "Aluno"
     cab[1].text = "Turma/Período"
@@ -1156,6 +1223,7 @@ def criar_relatorio_word(
     adicionar_titulo_tabela(doc, numero_tabela, "Estudantes elegíveis à bonificação acadêmica")
 
     tabela_bonus = doc.add_table(rows=1, cols=7)
+
     cab = tabela_bonus.rows[0].cells
     cab[0].text = "Aluno"
     cab[1].text = "Turma/Período"
@@ -1191,6 +1259,7 @@ def criar_relatorio_word(
     adicionar_titulo_tabela(doc, numero_tabela, "Plano de ação pedagógico baseado nos indicadores do Teste de Progresso")
 
     tabela_plano = doc.add_table(rows=1, cols=5)
+
     cab = tabela_plano.rows[0].cells
     cab[0].text = "Problema identificado"
     cab[1].text = "Ação proposta"
@@ -1246,6 +1315,12 @@ def criar_relatorio_word(
     doc.save(caminho)
 
     return caminho
+
+
+# =====================================================
+# COMPARAÇÃO LONGITUDINAL
+# =====================================================
+
 def perguntar_comparacao_longitudinal():
     print("\n========================================")
     print("COMPARAÇÃO LONGITUDINAL")
@@ -1258,18 +1333,7 @@ def perguntar_comparacao_longitudinal():
     opcao = input("\nEscolha uma opção: ").strip()
 
     if opcao not in ["2", "3"]:
-        return False, None, []
-
-    print("\nTIPO DE COMPARAÇÃO")
-    print("1 - Desempenho geral")
-    print("2 - Turma/período")
-    print("3 - Ciclo formativo")
-    print("4 - Grandes áreas")
-    print("5 - Estudantes em risco")
-    print("6 - Pontos extras")
-    print("7 - Comparação completa")
-
-    tipo = input("\nEscolha o tipo de comparação: ").strip()
+        return False, []
 
     quantidade = 1
 
@@ -1299,7 +1363,9 @@ def perguntar_comparacao_longitudinal():
         if caminho:
             planilhas.append(caminho)
 
-    return True, tipo, planilhas
+    return True, planilhas
+
+
 def executar_comparacao_longitudinal(
     base_atual,
     alunos_risco_atual,
@@ -1495,10 +1561,15 @@ def executar_comparacao_longitudinal(
 
     return caminho_excel, caminho_grafico, caminho_word
 
+
+# =====================================================
+# MAIN
+# =====================================================
+
 def main():
     config = carregar_config()
 
-    comparar, tipo_comparacao, planilhas_comparacao = perguntar_comparacao_longitudinal()
+    comparar, planilhas_comparacao = perguntar_comparacao_longitudinal()
 
     pastas = criar_pasta_projeto(config)
 

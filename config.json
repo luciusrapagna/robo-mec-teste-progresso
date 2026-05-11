@@ -42,25 +42,33 @@
       "saude coletiva",
       "coletiva"
     ],
-
     "Clínica Médica": [
       "clínica médica",
       "clinica medica",
       "clinica",
       "clínica"
     ],
-
     "Pediatria": [
       "pediatria"
     ],
-
     "Ginecologia e Obstetrícia": [
       "ginecologia",
       "obstetrícia",
       "obstetricia",
-      "go"
+      "ginecologia e obstetrícia",
+      "ginecologia e obstetricia",
+      "gineco",
+      "gineco/obs",
+      "gineco_obs",
+      "gineco obs",
+      "obs",
+      "obst",
+      "go",
+      "g.o",
+      "g o",
+      "gineco obstetrícia",
+      "gineco obstetricia"
     ],
-
     "Cirurgia": [
       "cirurgia"
     ]
@@ -73,14 +81,12 @@
       "3",
       "4"
     ],
-
     "Ciclo Clínico": [
       "5",
       "6",
       "7",
       "8"
     ],
-
     "Internato": [
       "9",
       "10",
@@ -91,34 +97,26 @@
 
   "relatorio": {
     "titulo": "Relatório Pedagógico do Teste de Progresso",
-
     "fonte_tabelas_figuras": "Fonte: Elaboração própria a partir dos resultados do Teste de Progresso.",
-
     "finalidade": "Documento institucional para subsidiar ações da coordenação, do NDE, do colegiado e processos de avaliação externa, incluindo visita do MEC."
   },
 
   "estilo_mec": {
     "progressao": "Observa-se progressão longitudinal do desempenho médio ao longo dos períodos do curso.",
-
     "competencias": "Os resultados sugerem consolidação progressiva das competências cognitivas esperadas para cada etapa formativa.",
-
     "monitoramento": "Os indicadores produzidos pelo Teste de Progresso subsidiam ações do NDE e da coordenação do curso.",
-
     "reforco": "As áreas com menor desempenho são analisadas como oportunidades de reforço pedagógico.",
-
     "curriculo": "Os resultados observados reforçam o alinhamento entre a matriz curricular e as competências previstas no PPC."
   },
 
   "plano_acao": {
     "usar_plano_automatico": true,
-
     "acoes_risco": [
       "Monitoria acadêmica",
       "Devolutiva individual",
       "Revisão de conteúdos",
       "Acompanhamento pedagógico"
     ],
-
     "acoes_areas_baixo_desempenho": [
       "Reforço pedagógico",
       "Revisão do eixo temático",

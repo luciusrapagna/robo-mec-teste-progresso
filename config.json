@@ -1,0 +1,66 @@
+{
+  "nome_instituicao": "Faculdade Unilagos",
+  "nome_curso": "Medicina",
+  "nome_avaliacao": "Teste de Progresso",
+  "numero_questoes": 120,
+
+  "criterios_risco": {
+    "risco_pedagogico_ate_percentual_abaixo_media": 10,
+    "risco_critico_a_partir_percentual_abaixo_media": 11
+  },
+
+  "criterios_pontos_extras": [
+    {
+      "faixa": "1% a 9,99% acima da média da turma",
+      "min_percentual_acima": 1,
+      "max_percentual_acima": 9.99,
+      "ponto_por_disciplina": 0.1,
+      "numero_disciplinas": 1,
+      "total_pontos": 0.1
+    },
+    {
+      "faixa": "10% a 19,99% acima da média da turma",
+      "min_percentual_acima": 10,
+      "max_percentual_acima": 19.99,
+      "ponto_por_disciplina": 0.2,
+      "numero_disciplinas": 2,
+      "total_pontos": 0.4
+    },
+    {
+      "faixa": "20% ou mais acima da média da turma",
+      "min_percentual_acima": 20,
+      "max_percentual_acima": null,
+      "ponto_por_disciplina": 0.3,
+      "numero_disciplinas": 3,
+      "total_pontos": 0.9
+    }
+  ],
+
+  "grandes_areas": {
+    "Saúde Coletiva": ["saúde coletiva", "saude coletiva", "coletiva"],
+    "Clínica Médica": ["clínica médica", "clinica medica", "clinica", "clínica"],
+    "Pediatria": ["pediatria"],
+    "Ginecologia e Obstetrícia": ["ginecologia", "obstetrícia", "obstetricia", "go"],
+    "Cirurgia": ["cirurgia"]
+  },
+
+  "ciclos_formativos": {
+    "Ciclo Básico": ["1", "2", "3", "4"],
+    "Ciclo Clínico": ["5", "6", "7", "8"],
+    "Internato": ["9", "10", "11", "12"]
+  },
+
+  "relatorio": {
+    "titulo": "Relatório Pedagógico do Teste de Progresso",
+    "fonte_tabelas_figuras": "Fonte: Elaboração própria a partir dos resultados do Teste de Progresso.",
+    "finalidade": "Documento institucional para subsidiar ações da coordenação, do NDE, do colegiado e processos de avaliação externa, incluindo visita do MEC."
+  },
+
+  "estilo_mec": {
+    "progressao": "Observa-se progressão longitudinal do desempenho médio ao longo dos períodos do curso.",
+    "competencias": "Os resultados sugerem consolidação progressiva das competências cognitivas esperadas para cada etapa formativa.",
+    "monitoramento": "Os indicadores produzidos pelo Teste de Progresso subsidiam ações do NDE e da coordenação do curso.",
+    "reforco": "As áreas com menor desempenho são analisadas como oportunidades de reforço pedagógico.",
+    "curriculo": "Os resultados observados reforçam o alinhamento entre a matriz curricular e as competências previstas no PPC."
+  }
+}

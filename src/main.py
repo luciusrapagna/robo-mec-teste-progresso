@@ -1246,10 +1246,260 @@ def criar_relatorio_word(
     doc.save(caminho)
 
     return caminho
+def perguntar_comparacao_longitudinal():
+    print("\n========================================")
+    print("COMPARAÇÃO LONGITUDINAL")
+    print("========================================")
+    print("Deseja comparar este Teste de Progresso com outro resultado?")
+    print("1 - Não")
+    print("2 - Sim, comparar com outro semestre")
+    print("3 - Sim, comparar com vários semestres")
 
+    opcao = input("\nEscolha uma opção: ").strip()
+
+    if opcao not in ["2", "3"]:
+        return False, None, []
+
+    print("\nTIPO DE COMPARAÇÃO")
+    print("1 - Desempenho geral")
+    print("2 - Turma/período")
+    print("3 - Ciclo formativo")
+    print("4 - Grandes áreas")
+    print("5 - Estudantes em risco")
+    print("6 - Pontos extras")
+    print("7 - Comparação completa")
+
+    tipo = input("\nEscolha o tipo de comparação: ").strip()
+
+    quantidade = 1
+
+    if opcao == "3":
+        quantidade = int(input("\nQuantas planilhas deseja comparar além da atual? ").strip())
+
+    planilhas = []
+
+    for i in range(quantidade):
+        print(f"\nSelecione a planilha de comparação {i + 1}")
+
+        root = Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+
+        caminho = askopenfilename(
+            title=f"Selecione a planilha de comparação {i + 1}",
+            filetypes=[
+                ("Arquivos Excel", "*.xlsx"),
+                ("Arquivos Excel antigos", "*.xls"),
+                ("Todos os arquivos", "*.*")
+            ]
+        )
+
+        root.destroy()
+
+        if caminho:
+            planilhas.append(caminho)
+
+    return True, tipo, planilhas
+def executar_comparacao_longitudinal(
+    base_atual,
+    alunos_risco_atual,
+    pontos_extras_atual,
+    planilhas_comparacao,
+    pastas,
+    config
+):
+    registros = []
+
+    registros.append({
+        "Aplicação": "Teste atual",
+        "Média geral (%)": base_atual["Percentual_acertos"].mean(),
+        "N estudantes": len(base_atual),
+        "Alunos em risco": len(alunos_risco_atual),
+        "Elegíveis a pontos extras": len(pontos_extras_atual)
+    })
+
+    for caminho in planilhas_comparacao:
+        try:
+            nome = os.path.basename(caminho)
+            nome = nome.replace(".xlsx", "").replace(".xls", "")
+
+            base_extra = carregar_dados(caminho)
+            coluna_nome_extra, coluna_periodo_extra, coluna_total_extra = detectar_colunas(base_extra)
+
+            base_extra, coluna_nome_extra, coluna_periodo_extra = preparar_base(
+                base_extra,
+                coluna_nome_extra,
+                coluna_periodo_extra,
+                coluna_total_extra,
+                config
+            )
+
+            alunos_risco_extra = base_extra[
+                base_extra["Nivel_risco"].isin(["Risco pedagógico", "Risco crítico"])
+            ].copy()
+
+            pontos_extras_extra = gerar_pontos_extras(
+                base_extra,
+                coluna_nome_extra,
+                coluna_periodo_extra,
+                config
+            )
+
+            registros.append({
+                "Aplicação": nome,
+                "Média geral (%)": base_extra["Percentual_acertos"].mean(),
+                "N estudantes": len(base_extra),
+                "Alunos em risco": len(alunos_risco_extra),
+                "Elegíveis a pontos extras": len(pontos_extras_extra)
+            })
+
+        except Exception as erro:
+            print(f"Erro ao processar comparação: {caminho}")
+            print(erro)
+
+    tabela = pd.DataFrame(registros)
+
+    caminho_excel = os.path.join(
+        pastas["tabelas"],
+        "comparacao_longitudinal.xlsx"
+    )
+
+    tabela.to_excel(caminho_excel, index=False)
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(
+        tabela["Aplicação"],
+        tabela["Média geral (%)"],
+        marker="o",
+        linewidth=3
+    )
+
+    for i, row in tabela.iterrows():
+        plt.text(
+            i,
+            row["Média geral (%)"] + 0.5,
+            f"{row['Média geral (%)']:.1f}%",
+            ha="center",
+            fontsize=11,
+            fontweight="bold"
+        )
+
+    plt.title("Evolução longitudinal do desempenho médio", fontsize=18, fontweight="bold")
+    plt.xlabel("Aplicação do Teste de Progresso")
+    plt.ylabel("Média geral (%)")
+    plt.grid(alpha=0.2)
+
+    caminho_grafico = os.path.join(
+        pastas["graficos"],
+        "evolucao_longitudinal.png"
+    )
+
+    plt.savefig(caminho_grafico, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    caminho_word = os.path.join(
+        pastas["relatorios"],
+        "relatorio_comparacao_longitudinal.docx"
+    )
+
+    doc = Document()
+    configurar_documento(doc)
+
+    doc.add_heading("Relatório de Comparação Longitudinal do Teste de Progresso", level=0)
+
+    add_titulo(doc, "1", "Resumo da comparação longitudinal")
+
+    add_paragrafo(
+        doc,
+        "A comparação longitudinal foi realizada a partir de diferentes aplicações do Teste de Progresso. "
+        "Essa análise permite acompanhar a evolução institucional do desempenho discente ao longo do tempo "
+        "e subsidia decisões da coordenação, do NDE e do colegiado."
+    )
+
+    add_paragrafo(
+        doc,
+        "Os resultados comparativos estão apresentados na Figura 1 e na Tabela 1. A figura demonstra a evolução "
+        "da média geral entre as aplicações analisadas, enquanto a tabela sintetiza o número de estudantes, "
+        "os estudantes em risco e os estudantes elegíveis à bonificação acadêmica."
+    )
+
+    doc.add_picture(caminho_grafico, width=Inches(6))
+
+    adicionar_legenda_figura(
+        doc,
+        1,
+        "Evolução longitudinal do desempenho médio entre aplicações do Teste de Progresso.",
+        config
+    )
+
+    adicionar_titulo_tabela(
+        doc,
+        1,
+        "Síntese comparativa entre aplicações do Teste de Progresso"
+    )
+
+    tabela_doc = doc.add_table(rows=1, cols=5)
+
+    cab = tabela_doc.rows[0].cells
+    cab[0].text = "Aplicação"
+    cab[1].text = "Média geral (%)"
+    cab[2].text = "N estudantes"
+    cab[3].text = "Alunos em risco"
+    cab[4].text = "Elegíveis a pontos extras"
+
+    for _, row in tabela.iterrows():
+        cells = tabela_doc.add_row().cells
+        cells[0].text = str(row["Aplicação"])
+        cells[1].text = f"{row['Média geral (%)']:.2f}"
+        cells[2].text = str(int(row["N estudantes"]))
+        cells[3].text = str(int(row["Alunos em risco"]))
+        cells[4].text = str(int(row["Elegíveis a pontos extras"]))
+
+    formatar_tabela_ibge(tabela_doc)
+    adicionar_fonte(doc, config)
+
+    add_titulo(doc, "2", "Leitura pedagógica da evolução")
+
+    if len(tabela) >= 2:
+        primeira = tabela.iloc[0]["Média geral (%)"]
+        ultima = tabela.iloc[-1]["Média geral (%)"]
+        diferenca = ultima - primeira
+
+        if diferenca > 0:
+            texto = (
+                f"Observou-se aumento de {diferenca:.2f} pontos percentuais entre a primeira e a última "
+                f"aplicação analisada. Esse resultado sugere evolução do desempenho médio institucional "
+                f"no período comparado."
+            )
+        elif diferenca < 0:
+            texto = (
+                f"Observou-se redução de {abs(diferenca):.2f} pontos percentuais entre a primeira e a última "
+                f"aplicação analisada. Esse resultado deve ser analisado pela coordenação e pelo NDE como "
+                f"oportunidade de revisão pedagógica."
+            )
+        else:
+            texto = (
+                "As médias permaneceram estáveis entre a primeira e a última aplicação analisada, indicando "
+                "manutenção do desempenho médio institucional no período comparado."
+            )
+
+        add_paragrafo(doc, texto)
+
+    add_paragrafo(
+        doc,
+        "A comparação longitudinal fortalece o uso do Teste de Progresso como instrumento de monitoramento "
+        "contínuo da aprendizagem e como evidência de gestão acadêmica baseada em dados."
+    )
+
+    doc.save(caminho_word)
+
+    return caminho_excel, caminho_grafico, caminho_word
 
 def main():
     config = carregar_config()
+
+    comparar, tipo_comparacao, planilhas_comparacao = perguntar_comparacao_longitudinal()
+
     pastas = criar_pasta_projeto(config)
 
     caminho_planilha = pedir_planilha(config)
@@ -1310,6 +1560,23 @@ def main():
         tabelas_areas,
         config
     )
+
+    if comparar:
+        caminho_excel_long, caminho_grafico_long, caminho_word_long = executar_comparacao_longitudinal(
+            base,
+            alunos_risco,
+            pontos_extras,
+            planilhas_comparacao,
+            pastas,
+            config
+        )
+
+        print("\n==============================================")
+        print("COMPARAÇÃO LONGITUDINAL GERADA COM SUCESSO!")
+        print("==============================================")
+        print(f"Tabela: {caminho_excel_long}")
+        print(f"Gráfico: {caminho_grafico_long}")
+        print(f"Relatório: {caminho_word_long}")
 
     print("\n==============================================")
     print("ROBÔ MEC FINALIZADO COM SUCESSO!")
